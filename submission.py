@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 def state_smoothing():
     pass
 def symbol_smoothing():
@@ -33,7 +34,7 @@ def transition_matrix(nstates,all_states,df):
     for i in range(nstates-1):
         for j in range(nstates):
             #no transition to begin
-            if(all_states[i+1] == 'BEGIN' and all_states[j+1] == 'BEGIN'):
+            if(all_states[j+1] == 'BEGIN'):
                 matrx[i][j] = 0
                 continue
             if(i in df.state1.values):
@@ -64,7 +65,18 @@ def emission_prob(nsymbols,df1,state,symbol):
         n_i = n_ij = 0
     emission_prob=(n_ij+1)/(n_i+nsymbols+1)
     return emission_prob     
-
+#=======================tokenize==============================
+def tokenize(address):
+    aprime = re.split('\s+',a)
+    for i in aprime:
+        i = i.strip()
+    result = []
+    for i in aprime:
+        temp = re.split('(\*|\,|\(|\)|\/|-|&|\")',i)
+        for j in temp:
+            if(j):
+                result.append(j)
+    return result
 # Question 1
 def viterbi_algorithm(State_File, Symbol_File, Query_File): # do not change the heading of the function
     nstates,all_states,df = file_parser(State_File)
