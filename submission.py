@@ -175,8 +175,8 @@ def top_k_viterbi(State_File, Symbol_File, Query_File, k): # do not change the h
         result_mat = []
 
     return
-top_k_viterbi('toy_example/State_File', 'toy_example/Symbol_File', 'toy_example/Query_File', 3)
-# top_k_viterbi('dev_set/State_File', 'dev_set/Symbol_File', 'dev_set/Query_File', 3)
+# top_k_viterbi('toy_example/State_File', 'toy_example/Symbol_File', 'toy_example/Query_File', 3)
+top_k_viterbi('dev_set/State_File', 'dev_set/Symbol_File', 'dev_set/Query_File', 3)
 
 
 
