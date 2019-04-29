@@ -1,6 +1,7 @@
 import re
 from math import log
 import numpy as np
+import copy 
 #extract transition probability from state file A()
 #extract emission probability from symbol file B()
 #========================trans prob=======================       
@@ -145,8 +146,8 @@ def viterbi_algorithm(State_File, Symbol_File, Query_File):
         ###################################
         state_seq.append(log_max)
         ##################################
-        #state_seq_str = [str(i) for i in state_seq]
-        #print(' '.join(state_seq_str))
+        # state_seq_str = [str(i) for i in state_seq]
+        # print(' '.join(state_seq_str))
         #print(state_seq)
         final.append(state_seq)
     return final
@@ -223,7 +224,8 @@ def top_k_viterbi(State_File, Symbol_File, Query_File, k): # do not change the h
         final_probs = list(zip( all_candidates.flatten() , predecessors.flatten() ))
         sorted_probs = sorted(final_probs, key=lambda x:x[1])
         sorted_probs = sorted(sorted_probs, key=lambda x:x[0], reverse = 1)
-
+        # print('================dp=============')
+        # print(dp_matrx)
         # step2: back track in the track matrx
         for i in range(k):
             cur_prob = sorted_probs[i][0]   # i-th largest prob
@@ -251,11 +253,29 @@ def top_k_viterbi(State_File, Symbol_File, Query_File, k): # do not change the h
             answer_matrix.append(state_seq)
     return answer_matrix
 
-          
-            
-
 
 # Question 3 + Bonus
+def find_match(regex):#regex,state_dic
+    #Street number = 1
+    #CommercialUnitType  = 8
+    #SubNumber = 9
+    #Location-Inside-Building = 12
+    #EntityName = 14
+    if(re.match(r'^lot([0-9]+)$',regex,flags = re.IGNORECASE)):
+        return 1
+    if(re.match(r'^shp([0-9]+)$',regex,flags = re.IGNORECASE) or \
+        re.match(r'^lvl([0-9]+)$',regex,flags = re.IGNORECASE) or \
+        re.match(r'^stex([0-9]+)$',regex,flags = re.IGNORECASE) or \
+        re.match(r'^level([0-9]+)$',regex,flags = re.IGNORECASE) or 
+        re.match(r'^([0-9]+)thflr$',regex,flags = re.IGNORECASE)):
+        return 9
+    if(re.match(r'^locked$',regex,flags = re.IGNORECASE)):
+        return 8
+    if(re.match(r'^kiosk$',regex,flags = re.IGNORECASE)):
+        return 12
+    if(re.match(r'^UNSW$',regex,flags = re.IGNORECASE)):
+        return 14
+    return False
 def emission_matrix_smoothed(nstates,nsymbols,symbol_file):
     '''
     input:
@@ -273,10 +293,10 @@ def emission_matrix_smoothed(nstates,nsymbols,symbol_file):
             row_number = int(line[0])
             col_number = int(line[1])
             matrx[row_number][col_number] = int(line[2]) 
-    for i in range(len(matrx)-2):
-        total = np.sum(matrx[i])
+    for i in range(len(matrx)-2):#row
+        total = np.sum(matrx[i])#row total
         smoothing = (total*0.02)/(nsymbols + 1)
-        for j in range(len(matrx[i])):
+        for j in range(len(matrx[i])):#column
             matrx[i][j] = (matrx[i][j] + smoothing)/(total + smoothing*(nsymbols + 1))
     f.close()
     return matrx
@@ -287,10 +307,12 @@ def advanced_decoding(State_File, Symbol_File, Query_File): # do not change the 
     nsymbols,all_symbols = file_parser(Symbol_File)
     trans_matrx = transition_matrix(nstates,all_states,State_File)
     emis_matrx = emission_matrix_smoothed(nstates,nsymbols,Symbol_File)
+    #print(all_symbols)
     query = open(Query_File, 'r')
     # process each line of query
     final = []
     for l in query:
+        unknown = {}
         line = tokenize(l)
         dp_matrx = np.zeros(shape=(nstates,len(line)))
         track_matrx = np.zeros(shape=(nstates,len(line)))
@@ -300,6 +322,7 @@ def advanced_decoding(State_File, Symbol_File, Query_File): # do not change the 
                 symbol_index = all_symbols[line[e]]
             else:
                 symbol_index = nsymbols  # UNKnown
+                unknown[e] = find_match(line[e]) #key = token index ;value = corrected value
             ### store first column to start the algorithm
             if e == 0:
                 begin_trans = trans_matrx[begin_state]
@@ -334,6 +357,9 @@ def advanced_decoding(State_File, Symbol_File, Query_File): # do not change the 
         ###################################
         state_seq.append(log_max)
         ##################################
+        for i in unknown:
+            if(unknown[i]):
+                state_seq[i+1] = unknown[i]
         #state_seq_str = [str(i) for i in state_seq]
         #print(' '.join(state_seq_str))
         #print(state_seq)
@@ -342,7 +368,7 @@ def advanced_decoding(State_File, Symbol_File, Query_File): # do not change the 
 
 
 #perl -pi -e 'chomp if eof' Q1
-#a = top_k_viterbi("./toy_example/State_File","./toy_example/Symbol_File","./toy_example/Query_File",4)
-# a = viterbi_algorithm("./toy_example/State_File","./toy_example/Symbol_File","./toy_example/Query_File")
+# a = viterbi_algorithm("./dev_set/State_File","./dev_set/Symbol_File","./dev_set/Query_File")
+# # a = viterbi_algorithm("./toy_example/State_File","./toy_example/Symbol_File","./toy_example/Query_File")
 # for i in a:
-# 	print(i)
+#   print(i)
